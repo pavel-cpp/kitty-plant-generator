@@ -4,17 +4,17 @@
 #include <SFML/Graphics.hpp>
 
 #include "drawer.h"
-#include "genom.h"
+#include "raw_genom.h"
 
 class application {
 public:
     application() = delete;
-    explicit application(const genom& gen);
+    explicit application(const raw_genom& gen);
     int exec();
 
 private:
     sf::RenderWindow window_;
-    drawer_interpreter drawer_;
+    drawer drawer_;
 
 private:
     void event_loop();

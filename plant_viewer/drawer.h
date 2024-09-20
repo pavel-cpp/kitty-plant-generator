@@ -1,26 +1,56 @@
 #ifndef DRAWER_H
 #define DRAWER_H
 
+#include <stack>
 #include <SFML/Graphics.hpp>
+#include "slices/animated_slice.h"
 
-#include "genom.h"
+#include "raw_genom.h"
+#include "tree_builder.h"
 
-class drawer_interpreter {
-public:
-    drawer_interpreter() = delete;
-    drawer_interpreter(const genom& gen, sf::RenderWindow& window, sf::Vector2f point) : gen_ {gen}, gen_it {gen_.begin()}, window_ {window}, point_ {point} {}
+class drawer {
+    public:
+        drawer() = delete;
 
-    void draw_next();
+        drawer(const raw_genom& gen, sf::RenderWindow& window) :
+            window_{window} {
+            genom_ = make_drawable_genom_tree(gen, [](const raw_slice& raw) {
+                return std::make_shared<animated_slice>(raw);
+            });
+            prev_gen_it_ = ++genom_.begin_breadth_first();
+            cur_gen_it_ = ++genom_.begin_breadth_first();
+        }
 
-    bool is_done() const;
+        void draw_next() {
+            if (is_done()) {
+                return;
+            }
+            if (cur_gen_it_ == ++genom_.begin_breadth_first()) {
+                cur_gen_it_->get()->set_position(sf::Vector2f {500, 500});
+            } else {
+                auto point = prev_gen_it_->get()->get_done_position();
+                cur_gen_it_->get()->set_position(point);
+            }
+            while (!cur_gen_it_->get()->is_done()) {
+                window_.draw(*(cur_gen_it_->get()));
+            }
+            prev_gen_it_ = cur_gen_it_;
+            ++cur_gen_it_;
+        }
 
-private:
-    genom gen_;
-    genom::iterator gen_it;
+        [[nodiscard]] bool is_done() const {
+            if (cur_gen_it_ == genom_.end_breadth_first()) {
+                return true;
+            }
+            return false;
+        }
 
-    sf::RenderWindow& window_;
-    sf::Vector2f point_;
+    private:
+        tree<std::shared_ptr<abstract_drawable_slice>> genom_;
+        tree<std::shared_ptr<abstract_drawable_slice>>::breadth_first_iterator cur_gen_it_;
+        tree<std::shared_ptr<abstract_drawable_slice>>::breadth_first_iterator prev_gen_it_;
+
+        sf::RenderWindow& window_;
 };
-
 
 #endif //DRAWER_H

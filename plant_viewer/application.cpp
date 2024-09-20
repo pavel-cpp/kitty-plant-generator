@@ -1,18 +1,29 @@
 #include "application.h"
-#include "thread"
+#include <thread>
 
-application::application(const genom& gen)
+application::application(const raw_genom& gen)
     : drawer_ {gen, window_}
 {
 }
 
 int application::exec() {
+    using namespace std::chrono_literals;
+
     window_.create(sf::VideoMode {800, 600}, "Viewer");
-    std::thread event_loop {*this, application::event_loop};
+    // std::thread event_loop {&application::event_loop, this};
+    window_.clear();
+    while (window_.isOpen()) {
+        sf::Event event;
+        while (window_.pollEvent(event)) {
+            process_events(event);
+        }
+        if (!drawer_.is_done()) {
+            drawer_.draw_next();
+            window_.display();
+            std::this_thread::sleep_for(100ms);
+        }
+    }
 
-
-
-    event_loop.join();
     return 0;
 }
 

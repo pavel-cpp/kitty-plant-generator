@@ -1,5 +1,6 @@
 #include "application.h"
-#include "genom.h"
+#include "raw_genom.h"
+#include "tree_builder.h"
 #include "io/loader.h"
 
 int main(int argc, char** argv) {
